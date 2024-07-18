@@ -1,3 +1,4 @@
+# video_processing/annotators.py
 import supervision as sv
 
 BOUNDING_BOX_ANNOTATOR = sv.BoxAnnotator(thickness=2)

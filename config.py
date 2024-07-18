@@ -1,3 +1,4 @@
+# config.py
 VIDEO_SOURCE = "http://192.168.4.24:8080/video"
 MODEL_ID = "yolo_world/s"
 CLASSES = ["book", "shoe", "table", "pillow", "toy", "stuffed animal"]

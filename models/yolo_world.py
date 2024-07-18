@@ -1,3 +1,4 @@
+# models/yolo_world.py
 import cv2
 import supervision as sv
 from inference.models.yolo_world.yolo_world import YOLOWorld

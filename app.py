@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, Response, render_template
 from video_processing.stream import VideoStream
 
