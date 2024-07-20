@@ -1,18 +1,23 @@
 # video_processing/stream.py
 import cv2
+from vidgear.gears import CamGear
 from models.yolo_world import YOLOModel
 from video_processing.annotators import annotate_frame
-from config import VIDEO_SOURCE, FPS
+from config import FPS
 
 class VideoStream:
     def __init__(self):
-        self.cap = cv2.VideoCapture(VIDEO_SOURCE)
-        if not self.cap.isOpened():
-            raise RuntimeError("Unable to open video source")
+        # Initialize CamGear stream
+        self.cap = CamGear(
+            source="https://www.youtube.com/live/OIqUka8BOS8?si=DVQmFImFtmlBB4QR",
+            stream_mode=True,
+            logging=True
+        ).start()
         
+        # Get initial frame to determine width and height
         ret, frame = self.cap.read()
         if not ret:
-            raise RuntimeError("Unable to read video source")
+            raise RuntimeError("Unable to read from video source")
         
         height, width, _ = frame.shape
         self.video_info = (width, height, FPS)
@@ -20,8 +25,8 @@ class VideoStream:
 
     def generate_frames(self):
         while True:
-            ret, frame = self.cap.read()
-            if not ret:
+            frame = self.cap.read()
+            if frame is None:
                 break
             
             try:
@@ -31,11 +36,11 @@ class VideoStream:
                 break
 
             width, height, _ = frame.shape
-            detections = detections[(detections.area / (width * height)) < 0.10]
+            detections = detections[detections['confidence'] >= self.model.confidence_threshold]
 
             labels = [
-                f"{detections.data['class_name'][i]} {detections.confidence[i]:.3f}"
-                for i in range(len(detections.confidence))
+                f"{detections.iloc[i]['class']} {detections.iloc[i]['confidence']:.3f}"
+                for i in range(len(detections))
             ]
             annotated_frame = annotate_frame(frame, detections, labels)
             
@@ -45,5 +50,5 @@ class VideoStream:
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     def __del__(self):
-        if self.cap.isOpened():
-            self.cap.release()
+        if hasattr(self.cap, 'stop'):
+            self.cap.stop()

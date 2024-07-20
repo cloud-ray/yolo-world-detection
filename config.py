@@ -1,7 +1,8 @@
 # config.py
-VIDEO_SOURCE = "http://192.168.4.24:8080/video"
-MODEL_ID = "yolo_world/s"
-CLASSES = ["book", "shoe", "table", "pillow", "toy", "stuffed animal"]
+VIDEO_SOURCE = "https://www.youtube.com/live/OIqUka8BOS8?si=DVQmFImFtmlBB4QR"
+# MODEL_ID = "yolo_world/s"
+MODEL_ID = "./models/yolov8s-world.pt"
+CLASSES = ["bird", "squirrel"]
 
 # Confidence threshold: minimum confidence score required for a detection to be considered valid
 # Lower values (e.g. 0.01) will detect more objects, but may include false positives
