@@ -1,0 +1,28 @@
+# utils/bytetrack.yaml
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# Default YOLO tracker settings for ByteTrack tracker https://github.com/ifzhang/ByteTrack
+
+tracker_type: bytetrack # tracker type, ['botsort', 'bytetrack']
+
+# Confidence threshold for strong track associations (Default: 0.5)
+# Detections with confidence above this threshold will be considered strong matches for existing tracks
+track_high_thresh: 0.3
+
+# Confidence threshold for weak track associations (Default: 0.1)
+# Detections with confidence above this threshold but below track_high_thresh will be considered weak matches for existing tracks
+track_low_thresh: 0.05
+
+# Confidence threshold for initiating new tracks (Default: 0.6)
+# Detections with confidence above this threshold and not matching any existing tracks will initiate a new track
+new_track_thresh: 0.4
+
+# Buffer size to calculate the time when to remove tracks (Default: 30)
+# Tracks that have not been updated for this many frames will be removed
+track_buffer: 30 
+
+# Similarity threshold for matching tracks (Default: 0.8)
+# Tracks with similarity above this threshold will be considered a match
+match_thresh: 0.7
+
+# min_box_area: 10  # threshold for min box areas(for tracker evaluation, not used for now)
+# mot20: False  # for tracker evaluation(not used for now)

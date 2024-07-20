@@ -26,99 +26,128 @@ YOLO-World stands out for its unique "prompt-then-detect" approach. Unlike tradi
 
 This innovative approach makes YOLO-World a powerful tool for various real-world applications requiring open-vocabulary object detection.
 
+
+
 ## Table of Contents
+1. [Installation and Setup](#installation-and-setup)
+   - [Clone the Repository](#clone-the-repository)
+   - [Install Dependencies](#install-dependencies)
+2. [Configuration](#configuration)
+3. [Running the Application](#running-the-application)
+4. [Code Overview](#code-overview)
+   - [main.py](#mainpy)
+   - [Functions Folder](#functions-folder)
+   - [Utils Folder](#utils-folder)
+5. [License](#license)
+6. [Acknowledgments](#acknowledgments)
+7. [Contact](#contact)
 
-- [Installation](#installation)
-- [Configuration](#configuration)
-  - [Control Detection Accuracy with Confidence Threshold](#control-detection-accuracy-with-confidence-threshold)
-  - [Eliminate Double Detections with Non-Max Suppression (NMS)](#eliminate-double-detections-with-non-max-suppression-nms)
-- [Running the Application](#running-the-application)
-- [Code Overview](#code-overview)
-  - [app.py](#apppy)
-  - [config.py](#configpy)
-  - [models/yolo_world.py](#modelsyolo_worldpy)
-  - [video_processing/annotators.py](#video_processingannotatorspy)
-  - [video_processing/stream.py](#video_processingstreampy)
-  - [templates/index.html](#templatesindexhtml)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-- [Contact](#contact)
+## Installation and Setup
 
-## Installation
+### Clone the Repository
 
-1. **Clone the repository:**
+Clone the repository and switch to the feature branch:
 
-    ```bash
-    git clone https://github.com/cloud-ray/yolo-world-detection.git
-    cd yolo-world-detection
-    ```
+```bash
+git clone https://github.com/cloud-ray/yolo-world-detection.git
+cd yolo-world-detection
+git checkout feature/youtube-live
+```
 
-2. **Create and activate a virtual environment:**
+### Install Dependencies
 
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+Create and activate a virtual environment (optional but recommended):
 
-3. **Install the required dependencies:**
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+```
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+Install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Configuration
 
-Modify the `config.py` file to set up your video source and model parameters.
+Update the `utils/config.py` file with the necessary paths and settings:
 
-### Control Detection Accuracy with Confidence Threshold
+### Paths and Model Settings
+```python
+# Path to the YOLO model file
+MODEL_PATH = "path/to/your/model/file"
 
-Set the CONFIDENCE_THRESHOLD to determine the minimum confidence score required for a detection to be considered valid. By adjusting this value, you can balance the trade-off between detecting more objects and ensuring the accuracy of those detections. For example:
-- Set a lower confidence threshold (e.g., 0.01) to detect more objects, but be prepared for a higher risk of false positives.
-- Set a higher confidence threshold (e.g., 0.5) to detect fewer, but more accurate objects.
+# List of class names for the model
+MODEL_CLASSES = ["class1", "class2", "class3"]
 
-### Eliminate Double Detections with Non-Max Suppression (NMS)
+# Path to the video source or camera URL
+VIDEO_SOURCE = "path/to/your/video/source"
+```
 
-Use the NMS_THRESHOLD to control the similarity threshold for duplicate detections. NMS evaluates the overlap between detections using the Intersection over Union metric. If the overlap exceeds the defined threshold, NMS discards the duplicates with the lowest confidence. Set the NMS_THRESHOLD value between 0 and 1, where:
-- Smaller values (e.g., 0.01) are more restrictive, merging very similar detections and reducing the number of detected objects.
-- Larger values (e.g., 0.5) are less restrictive, merging less similar detections and resulting in more objects being detected.
+### Key Configuration Values
+```python
+# Flag to determine whether to save annotated images or clean images
+SAVE_ANNOTATED_IMAGES = True
+```
+- **`SAVE_ANNOTATED_IMAGES`**: When set to `True`, saves images with bounding boxes. Set to `False` for clean images without annotations.
+
+```python
+# Interval in seconds between detections
+DETECTION_INTERVAL = 0
+```
+- **`DETECTION_INTERVAL`**: Controls detection frequency. `0` performs detection on every frame. Increase to reduce processing load.
+
+```python
+# Maximum number of frames per second to process
+FPS = 30
+```
+- **`FPS`**: Sets the maximum frames per second. Lower FPS reduces processing load but may affect video smoothness. Adjust according to your needs.
 
 ## Running the Application
 
-1. **Start the Flask app:**
+Start the application with:
 
-    ```bash
-    python app.py
-    ```
+```bash
+python main.py
+```
 
-2. **Access the application:**
+### Usage
+- The application initializes the YOLO model and video stream.
+- It processes frames in real-time and displays the output.
+- Press 'q' to quit the application.
 
-    Open your web browser and navigate to `http://0.0.0.0:5025`.
+### Troubleshooting
+- Ensure all paths in `utils/config.py` are correct.
+- Check logs for errors or warnings. Refer to `utils/logger.py` for logging details.
 
 ## Code Overview
 
-### app.py
+### `main.py`
 
-The main Flask application that sets up the routes and starts the server.
+The `main.py` file orchestrates the object detection application:
 
-### config.py
+- **Setup Logging**: Configures logging.
+- **Load Model**: Initializes the YOLO-World object detection model.
+- **Initialize Stream**: Starts video capture.
+- **Process and Display Frames**: Processes and displays video frames.
+- **Cleanup**: Releases resources and closes windows.
 
-Contains configuration variables for the video source and model parameters.
+### Functions Folder
 
-### models/yolo_world.py
+- **`frame_processor.py`**: Processes frames for detection and tracking.
+- **`object_tracker.py`**: Tracks detected objects.
+- **`screenshot_handler.py`**: Manages screenshots and labels.
+- **`stream_handler.py`**: Manages video streams.
+- **`yolo_model.py`**: Configures and loads the YOLO model.
 
-Defines the `YOLOModel` class that wraps the YOLO model for object detection.
+### Utils Folder
 
-### video_processing/annotators.py
-
-Contains functions to annotate frames with bounding boxes and labels.
-
-### video_processing/stream.py
-
-Defines the `VideoStream` class that handles reading frames from the video source and applying the YOLO model for detection.
-
-### templates/index.html
-
-The HTML template for the web interface.
+- **`config.py`**: Manages configuration settings.
+- **`frame_utils.py`**: Provides utilities for frame processing.
+- **`logger.py`**: Configures application logging.
+- **`image_utils.py`**: Handles image processing tasks.
+- **`annotator.py`**: Processes images with annotations.
 
 ## License
 
@@ -126,9 +155,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [Zero-shot object detection with YOLO World](https://supervision.roboflow.com/develop/notebooks/zero-shot-object-detection-with-yolo-world/)
-- [YOLOv10: How to Train](https://blog.roboflow.com/yolov10-how-to-train)
-- [YOLO World documentation](https://docs.ultralytics.com/models/yolo-world/)
+- [YOLO-World Model](https://docs.ultralytics.com/models/yolo-world)
+- [How to Detect Objects with YOLO-World](https://blog.roboflow.com/how-to-detect-objects-with-yolo-world/)
+- [Object Counting using Ultralytics YOLOv8](https://docs.ultralytics.com/guides/object-counting/)
 
 ## Contact
+
 For any questions or comments, please contact [Ray](mailto:ray@cybersavvy.one).

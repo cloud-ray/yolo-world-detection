@@ -10,6 +10,7 @@ backoff==2.2.1
 blinker==1.8.2
 boto3==1.34.123
 botocore==1.34.144
+Brotli==1.1.0
 cachetools==5.4.0
 certifi==2024.7.4
 cffi==1.16.0
@@ -17,6 +18,7 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.4
 coloredlogs==15.0.1
+colorlog==6.8.2
 contourpy==1.2.1
 cryptography==42.0.8
 cycler==0.12.1
@@ -52,6 +54,7 @@ httpx==0.27.0
 humanfriendly==10.0
 idna==3.7
 imageio==2.34.2
+inference==0.15.0
 inference-cpu==0.14.1
 iniconfig==2.0.0
 itsdangerous==2.2.0
@@ -60,6 +63,7 @@ jmespath==1.0.1
 jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
 kiwisolver==1.4.5
+lapx==0.5.9.post1
 lazy_loader==0.4
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
@@ -68,6 +72,7 @@ matplotlib==3.9.1
 mdurl==0.1.2
 mpmath==1.3.0
 multidict==6.0.5
+mutagen==1.47.0
 mypy-extensions==1.0.0
 networkx==3.3
 numpy==1.26.4
@@ -93,7 +98,9 @@ pyasn1==0.6.0
 pyasn1_modules==0.4.0
 pybase64==1.3.2
 pycparser==2.22
+pycryptodomex==3.20.0
 pydantic==2.8.2
+pydantic-settings==2.3.4
 pydantic_core==2.20.1
 pydot==3.0.1
 Pygments==2.18.0
@@ -138,12 +145,15 @@ typing-inspect==0.9.0
 typing_extensions==4.12.2
 tzdata==2024.1
 tzlocal==5.2
-ultralytics==8.2.59
+ultralytics==8.2.60
 ultralytics-thop==2.0.0
 uritemplate==4.1.1
 urllib3==1.26.19
+vidgear==0.3.3
 wcwidth==0.2.13
 websocket-client==1.8.0
+websockets==12.0
 Werkzeug==3.0.3
 yarl==1.9.4
+yt-dlp==2024.7.16
 zxing-cpp==2.2.0
