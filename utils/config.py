@@ -5,17 +5,21 @@
 # Object detection and tracking thresholds
 MODEL_TRACK_CONF = 0.25  # Minimum confidence threshold for object detection
 MODEL_TRACK_IOU = 0.5    # Minimum intersection over union (IOU) threshold for object tracking
-SS_CONFIDENCE_THRESHOLD = 0.5  # Confidence threshold for object detection before saving a screenshot
+SS_CONFIDENCE_THRESHOLD = 0.25  # Confidence threshold for object detection before saving a screenshot
 FRAME_COUNT_THRESHOLD = 3  # Number of consecutive frames required to save a screenshot
 ADDITIONAL_FRAME_THRESHOLD = 20  # Number of frames before saving additional screenshots
-MAX_SCREENSHOTS = 5
+MAX_SCREENSHOTS = 5 # Maximum number of screenshots to save
 
+RESIZE_DIMENSIONS = (1280, 720) # Resize dimensions for images (width, height)
+JPEG_QUALITY = 90 # JPEG quality setting for saved screenshots (1-100)
 
 # Frame rate (FPS) settings
 # This controls the maximum number of frames per second to process.
 # Lower FPS can help reduce processing load but may affect smoothness of the video stream.
 # Common values are 15, 30, or 60 FPS depending on your application's performance needs.
 FPS = 30
+
+PLOT_ANNOTATED_BOXES = True  # Set to False if you do not want to plot annotated boxes on the images
 
 # Detection interval settings
 DETECTION_INTERVAL = 1  # Interval in seconds between detections
@@ -25,8 +29,8 @@ TRACKER_CONFIG_PATH = "./config/bytetrack.yaml"  # Path to the tracker configura
 
 # Model and video source configurations
 MODEL_PATH = "./model/yolov8s-world.pt"  # Path to the YOLO model file
-MODEL_CLASSES = ["bird", "squirrel", "deer"]  # List of class names for the model
-VIDEO_SOURCE = "https://www.youtube.com/live/2uabwdYMzVk?si=2aB8m5P6SCxCRUPY"  # URL or path of the video source
+MODEL_CLASSES = ["bird", "squirrel", "deer", "raccoon"]  # List of class names for the model
+VIDEO_SOURCE = "https://www.youtube.com/live/oI8R4_UG3Fs?si=eA0u4cC0tbq7meZo"  # URL or path of the video source
 
 # Logging configurations
 LOG_DIRECTORY = "logs"  # Directory where log files will be saved

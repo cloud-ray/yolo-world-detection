@@ -90,11 +90,15 @@ def process_frame(model, classes, frame):
                     # Update object state and check conditions
                     if obj_id is not None:
                         update_object_tracker(obj_id, confidence)
-                        
-                        center_x, center_y, box_width, box_height = convert_to_yolo_format(x1, y1, x2, y2, width, height)
-                        
+
+                        # Use original coordinates directly
+                        center_x = (x1 + x2) / 2
+                        center_y = (y1 + y2) / 2
+                        box_width = x2 - x1
+                        box_height = y2 - y1
+
                         # Save screenshot and label file
-                        check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height)
+                        check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, x1, y1, x2, y2)
 
                     # Draw bounding boxes, labels, and IDs on the frame if enabled
                     if SAVE_ANNOTATED_IMAGES:
@@ -131,26 +135,26 @@ def extract_box_details(boxes):
     ids = boxes.id.detach().tolist() if hasattr(boxes, 'id') and boxes.id is not None else [None] * len(xyxy)
     return xyxy, conf, cls, ids
 
-def convert_to_yolo_format(x1, y1, x2, y2, width, height):
-    """
-    Convert bounding box coordinates to YOLO format.
+# def convert_to_yolo_format(x1, y1, x2, y2, width, height):
+#     """
+#     Convert bounding box coordinates to YOLO format.
 
-    Args:
-        x1 (float): Top-left x coordinate of the bounding box.
-        y1 (float): Top-left y coordinate of the bounding box.
-        x2 (float): Bottom-right x coordinate of the bounding box.
-        y2 (float): Bottom-right y coordinate of the bounding box.
-        width (int): Width of the image.
-        height (int): Height of the image.
+#     Args:
+#         x1 (float): Top-left x coordinate of the bounding box.
+#         y1 (float): Top-left y coordinate of the bounding box.
+#         x2 (float): Bottom-right x coordinate of the bounding box.
+#         y2 (float): Bottom-right y coordinate of the bounding box.
+#         width (int): Width of the image.
+#         height (int): Height of the image.
 
-    Returns:
-        tuple: Center x, center y, width, and height of the bounding box in YOLO format.
-    """
-    center_x = (x1 + x2) / 2 / width
-    center_y = (y1 + y2) / 2 / height
-    box_width = (x2 - x1) / width
-    box_height = (y2 - y1) / height
-    return center_x, center_y, box_width, box_height
+#     Returns:
+#         tuple: Center x, center y, width, and height of the bounding box in YOLO format.
+#     """
+#     center_x = (x1 + x2) / 2 / width
+#     center_y = (y1 + y2) / 2 / height
+#     box_width = (x2 - x1) / width
+#     box_height = (y2 - y1) / height
+#     return center_x, center_y, box_width, box_height
 
 def print_detected_item(classes, class_idx, confidence, x1, y1, x2, y2, obj_id):
     """
