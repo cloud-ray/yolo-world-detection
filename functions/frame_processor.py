@@ -7,6 +7,7 @@ from functions.object_tracker import update_object_tracker
 from functions.screenshot_handler import check_and_save_screenshot
 from utils.logger import setup_logging
 from utils.frame_utils import FPSCounter, throttle_frame_rate
+# from functions.retrieve_image_data import resize_screenshot
 
 # Set up logging
 setup_logging()
@@ -79,7 +80,10 @@ def process_frame(model, classes, frame):
                     logging.info("No bounding boxes found in the results.")
                     continue
 
-                xyxy, conf, cls, ids = extract_box_details(boxes)
+                xyxy, conf, cls, ids, orig_shape = extract_box_details(boxes)
+                
+                # Call the resize_screenshot function with the extracted box data
+                # resize_screenshot(xyxy, conf, cls, ids)
 
                 for i in range(len(xyxy)):
                     x1, y1, x2, y2 = xyxy[i]
@@ -98,7 +102,8 @@ def process_frame(model, classes, frame):
                         box_height = y2 - y1
 
                         # Save screenshot and label file
-                        check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, x1, y1, x2, y2)
+                        # check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, xyxy, conf, cls, ids, orig_shape)
+                        check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, x1, y1, x2, y2, orig_shape)
 
                     # Draw bounding boxes, labels, and IDs on the frame if enabled
                     if SAVE_ANNOTATED_IMAGES:
@@ -133,7 +138,9 @@ def extract_box_details(boxes):
     conf = boxes.conf.detach().tolist()
     cls = boxes.cls.detach().tolist()
     ids = boxes.id.detach().tolist() if hasattr(boxes, 'id') and boxes.id is not None else [None] * len(xyxy)
-    return xyxy, conf, cls, ids
+    orig_shape = boxes.orig_shape
+
+    return xyxy, conf, cls, ids, orig_shape
 
 # def convert_to_yolo_format(x1, y1, x2, y2, width, height):
 #     """
