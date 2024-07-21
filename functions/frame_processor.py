@@ -2,12 +2,13 @@
 import cv2
 import time
 import logging
-from utils.config import MODEL_TRACK_CONF, MODEL_TRACK_IOU, TRACKER_CONFIG_PATH, DETECTION_INTERVAL
+
 from functions.object_tracker import update_object_tracker
 from functions.screenshot_handler import check_and_save_screenshot
+
 from utils.logger import setup_logging
 from utils.frame_utils import FPSCounter, throttle_frame_rate
-# from functions.retrieve_image_data import resize_screenshot
+from utils.config import MODEL_TRACK_CONF, MODEL_TRACK_IOU, TRACKER_CONFIG_PATH, DETECTION_INTERVAL
 
 # Set up logging
 setup_logging()
@@ -18,8 +19,10 @@ fps_counter = FPSCounter()
 # Initialize detection timer
 last_detection_time = time.time()
 
-# Flag to determine whether to save annotated images or clean images
-SAVE_ANNOTATED_IMAGES = True
+###### Flag to determine whether to save annotated images or clean images
+SHOW_BOUNDING_BOX = False
+######
+
 
 def process_frame(model, classes, frame):
     """
@@ -69,7 +72,7 @@ def process_frame(model, classes, frame):
                 logging.info("No objects detected in the frame.")
                 return frame
 
-            height, width, _ = frame.shape
+            # height, width, _ = frame.shape
 
             # Log the speed of the results
             log_speed(results[0].speed)
@@ -81,9 +84,6 @@ def process_frame(model, classes, frame):
                     continue
 
                 xyxy, conf, cls, ids, orig_shape = extract_box_details(boxes)
-                
-                # Call the resize_screenshot function with the extracted box data
-                # resize_screenshot(xyxy, conf, cls, ids)
 
                 for i in range(len(xyxy)):
                     x1, y1, x2, y2 = xyxy[i]
@@ -95,19 +95,22 @@ def process_frame(model, classes, frame):
                     if obj_id is not None:
                         update_object_tracker(obj_id, confidence)
 
-                        # Use original coordinates directly
-                        center_x = (x1 + x2) / 2
-                        center_y = (y1 + y2) / 2
-                        box_width = x2 - x1
-                        box_height = y2 - y1
+                        print_detected_item(classes, class_idx, confidence, x1, y1, x2, y2, obj_id)
 
-                        # Save screenshot and label file
+                        # # Use original coordinates directly
+                        # center_x = (x1 + x2) / 2
+                        # center_y = (y1 + y2) / 2
+                        # box_width = x2 - x1
+                        # box_height = y2 - y1
+
+                        #### CHECK WHAT VARIABLES ARE NEEDED
                         # check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, xyxy, conf, cls, ids, orig_shape)
-                        check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, x1, y1, x2, y2, orig_shape)
+                        # check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, center_x, center_y, box_width, box_height, x1, y1, x2, y2, orig_shape)
+                        check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, x1, y1, x2, y2, orig_shape)
 
                     # Draw bounding boxes, labels, and IDs on the frame if enabled
-                    if SAVE_ANNOTATED_IMAGES:
-                        print_detected_item(classes, class_idx, confidence, x1, y1, x2, y2, obj_id)
+                    if SHOW_BOUNDING_BOX:
+                        # print_detected_item(classes, class_idx, confidence, x1, y1, x2, y2, obj_id)
                         draw_boxes_and_labels(frame, classes, class_idx, confidence, x1, y1, x2, y2, obj_id)
 
         except Exception as e:
@@ -123,6 +126,7 @@ def log_speed(speed):
         speed (dict): Dictionary containing speed metrics for preprocessing, inference, and postprocessing.
     """
     logging.debug(f"Speed: {speed['preprocess']:.3f}ms preprocess, {speed['inference']:.3f}ms inference, {speed['postprocess']:.3f}ms postprocess per image")
+
 
 def extract_box_details(boxes):
     """
@@ -142,26 +146,6 @@ def extract_box_details(boxes):
 
     return xyxy, conf, cls, ids, orig_shape
 
-# def convert_to_yolo_format(x1, y1, x2, y2, width, height):
-#     """
-#     Convert bounding box coordinates to YOLO format.
-
-#     Args:
-#         x1 (float): Top-left x coordinate of the bounding box.
-#         y1 (float): Top-left y coordinate of the bounding box.
-#         x2 (float): Bottom-right x coordinate of the bounding box.
-#         y2 (float): Bottom-right y coordinate of the bounding box.
-#         width (int): Width of the image.
-#         height (int): Height of the image.
-
-#     Returns:
-#         tuple: Center x, center y, width, and height of the bounding box in YOLO format.
-#     """
-#     center_x = (x1 + x2) / 2 / width
-#     center_y = (y1 + y2) / 2 / height
-#     box_width = (x2 - x1) / width
-#     box_height = (y2 - y1) / height
-#     return center_x, center_y, box_width, box_height
 
 def print_detected_item(classes, class_idx, confidence, x1, y1, x2, y2, obj_id):
     """
@@ -178,6 +162,7 @@ def print_detected_item(classes, class_idx, confidence, x1, y1, x2, y2, obj_id):
         obj_id (int): ID of the detected object.
     """
     logging.info(f"Detected item: {classes[class_idx]} with confidence {confidence:.2f} at coordinates ({x1:.2f}, {y1:.2f}, {x2:.2f}, {y2:.2f}), ID: {obj_id}")
+
 
 def draw_boxes_and_labels(frame, classes, class_idx, confidence, x1, y1, x2, y2, obj_id):
     """

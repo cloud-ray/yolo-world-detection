@@ -1,0 +1,56 @@
+{
+    "objects": [
+        {
+            "image_path": "./screenshots/images/bird_0_0.51_2.0_1721572858.png",
+            "bbox": {
+                "x1": 838,
+                "y1": 259,
+                "x2": 1020,
+                "y2": 468
+            },
+            "orig_shape": [
+                1080,
+                1920
+            ]
+        },
+        {
+            "image_path": "./screenshots/images/bird_0_0.69_3.0_1721572858.png",
+            "bbox": {
+                "x1": 154,
+                "y1": 512,
+                "x2": 343,
+                "y2": 609
+            },
+            "orig_shape": [
+                1080,
+                1920
+            ]
+        },
+        {
+            "image_path": "./screenshots/images/bird_0_0.25_1.0_1721573133.png",
+            "bbox": {
+                "x1": 486,
+                "y1": 520,
+                "x2": 735,
+                "y2": 633
+            },
+            "orig_shape": [
+                1080,
+                1920
+            ]
+        },
+        {
+            "image_path": "./screenshots/images/bird_0_0.58_6.0_1721573136.png",
+            "bbox": {
+                "x1": 664,
+                "y1": 488,
+                "x2": 874,
+                "y2": 607
+            },
+            "orig_shape": [
+                1080,
+                1920
+            ]
+        }
+    ]
+}

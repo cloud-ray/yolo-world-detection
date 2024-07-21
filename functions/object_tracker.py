@@ -31,7 +31,7 @@ def update_object_tracker(obj_id, confidence):
 
     if obj_id not in object_tracker:
         object_tracker[obj_id] = {
-            'confidence_values': [confidence],  # Store confidence values
+            'confidence_values': [confidence],
             'frame_count': 1,
             'frames_since_last_screenshot': 0,
             'saved': False
@@ -47,6 +47,7 @@ def update_object_tracker(obj_id, confidence):
             object_tracker[obj_id]['frame_count'] = 0
             object_tracker[obj_id]['frames_since_last_screenshot'] = 0
             logging.debug(f"Object {obj_id} confidence below threshold. Resetting frame count and screenshot timer.")
+
 
 def log_object_tracker_summary(obj_id):
     """
