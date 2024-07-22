@@ -1,79 +1,214 @@
 # functions/screenshot_resizer.py
-import os
-import sys
 import cv2
+import os
+import json
+import sqlite3
+import logging
+from utils.config import SQLITE_DATABASE_PATH
+from utils.logger import setup_logging
 
-# Add the parent directory to the sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from functions.labeler import process_and_save_yolo_labels
 
-from utils.image_utils import resize_image, draw_bounding_box, save_resized_image
-from utils.bbox_utils import scale_bounding_box, print_bounding_box_details
-from utils.file_utils import load_json_data, ensure_output_folder_exists, save_scaled_bboxes_to_json
+# Set up logging using the utility function
+setup_logging()
 
-# Constants
-NEW_IMAGE_SIZE = (720, 1280)  # Adjust as needed
+# Define constants
+NEW_IMAGE_SIZE = (1280, 720)
 IMAGE_QUALITY = 90
-PRINT_WITH_COORDS = True
-RESIZED_IMAGE_DIRECTORY = "screenshots/resized/without_bbox"
-RESIZED_IMAGE_BBOX_DIRECTORY = "screenshots/resized/with_bbox"
-JSON_IMAGE_DATA_FILE = "screenshots/json/screenshot_data.json"
-JSON_RESIZED_DIRECTORY = "screenshots/resized/json"
-JSON_RESIZED_FILE_NAME = "resized_bbox_data.json"
+RESIZED_WITHOUT_BBOX_DIRECTORY = "./screenshots/resized/without_bbox"
+RESIZED_WITH_BBOX_DIRECTORY = "./screenshots/resized/with_bbox"
 
-def resize_image_and_bboxes(json_path, output_folder_with_bbox, output_folder_without_bbox, new_size=NEW_IMAGE_SIZE, print_with_coords=PRINT_WITH_COORDS):
-    """Resize images and bounding boxes according to new size, with options to save with and without bounding boxes."""
-    data = load_json_data(json_path)
-    ensure_output_folder_exists(output_folder_with_bbox)
-    ensure_output_folder_exists(output_folder_without_bbox)
+def ensure_directory_exists(directory):
+    # logging.debug(f"Checking if directory exists: {directory}")
+    if not os.path.exists(directory):
+        logging.info(f"Creating directory: {directory}")
+        os.makedirs(directory)
+    logging.debug(f"Directory exists: {directory}")
+    logging.info(f"Directory creation successful: {directory}")
 
-    new_height, new_width = new_size
+def resize_image(image, new_size):
+    # logging.debug(f"Resizing image to {new_size}")
+    resized_image = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
+    logging.info(f"Image resized successfully to {new_size}")
+    return resized_image
 
-    for obj in data['objects']:
-        image_path = obj['image_path']
-        bbox = obj['bbox']
-        orig_shape = obj['orig_shape']
-        orig_height, orig_width = orig_shape
+def save_image(image, path, IMAGE_QUALITY):
+    # logging.debug(f"Saving image to {path} with quality {IMAGE_QUALITY}")
+    cv2.imwrite(path, image, [int(cv2.IMWRITE_JPEG_QUALITY), IMAGE_QUALITY])
+    logging.info(f"Image saved successfully: {path}")
 
-        image = cv2.imread(image_path)
-        if image is None:
-            print(f"Error: Unable to open image {image_path}")
-            continue
+def draw_bounding_boxes(image, x1, y1, x2, y2):
+    logging.debug(f"Drawing bounding box on image with coordinates ({x1}, {y1}, {x2}, {y2})")
+    # Convert coordinates to integers for drawing
+    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+    cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    logging.info(f"Bouding box drawn successfully on image")
+    return image
 
-        scale_x = new_width / orig_width
-        scale_y = new_height / orig_height
+def update_database(record_id, resized_image_path_without_bbox, resized_x1, resized_y1, resized_x2, resized_y2, new_shape):
+    logging.debug(f"Updating database for record ID {record_id}")
+    try:
+        conn = sqlite3.connect(SQLITE_DATABASE_PATH)
+        cursor = conn.cursor()
 
-        resized_image = resize_image(image, (new_width, new_height))
-        new_bbox = scale_bounding_box(bbox, scale_x, scale_y)
+        # Convert new_shape tuple to JSON string
+        new_shape_json = json.dumps(new_shape)
+        logging.debug(f"Converted new_shape to JSON: {new_shape_json}")
 
-        if print_with_coords:
-            orig_bbox = (bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2'])
-            print_bounding_box_details(orig_bbox, new_bbox, orig_shape, new_size, scale_x, scale_y)
-            image_with_bbox = draw_bounding_box(resized_image.copy(), new_bbox)
+        # Debug logging for values being used in the query
+        logging.debug(f"Values for UPDATE query: "
+                      f"resized_image_path_without_bbox={resized_image_path_without_bbox}, "
+                      f"resized_x1={resized_x1}, resized_y1={resized_y1}, resized_x2={resized_x2}, "
+                      f"resized_y2={resized_y2}, new_shape_json={new_shape_json}, record_id={record_id}")
 
-            filename_with_bbox = os.path.basename(image_path).replace('.png', '.jpg')
-            output_path_with_bbox = os.path.join(output_folder_with_bbox, filename_with_bbox)
+        cursor.execute("""
+        UPDATE screenshots
+        SET resized_screenshot_path = ?, resized_x1 = ?, resized_y1 = ?, resized_x2 = ?, resized_y2 = ?, resized_shape = ?
+        WHERE id = ?
+        """, (resized_image_path_without_bbox, resized_x1, resized_y1, resized_x2, resized_y2, new_shape_json, record_id))
 
-            save_resized_image(image_with_bbox, output_path_with_bbox, quality=IMAGE_QUALITY)
-            print(f"Saved resized image WITH bounding box to {output_path_with_bbox}")
-        else:
-            filename_without_bbox = os.path.basename(image_path).replace('.png', '.jpg')
-            output_path_without_bbox = os.path.join(output_folder_without_bbox, filename_without_bbox)
+        conn.commit()
+        logging.info(f"Successfully updated resized data for record ID {record_id}.")
+    except sqlite3.Error as e:
+        logging.error(f"SQLite error while updating resized data: {e}")
+    finally:
+        conn.close()
+        logging.info("SQLite database connection closed after resizing.")
 
-            save_resized_image(resized_image, output_path_without_bbox, quality=IMAGE_QUALITY)
-            print(f"Saved resized image WITHOUT bounding box to {output_path_without_bbox}")
+def resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig_shape):
+    logging.debug(f"Resizing screenshot for record ID {record_id} with original shape {orig_shape}")
+    ensure_directory_exists(RESIZED_WITHOUT_BBOX_DIRECTORY)
+    ensure_directory_exists(RESIZED_WITH_BBOX_DIRECTORY)
 
-        # Save scaled bounding boxes to a JSON file
-        scaled_json_path = os.path.join(JSON_RESIZED_DIRECTORY, JSON_RESIZED_FILE_NAME)
-        save_scaled_bboxes_to_json(scaled_json_path, new_size, data)
+    image = cv2.imread(screenshot_path)
+    logging.debug(f"Read image from {screenshot_path}")
 
-# Example usage
-resize_image_and_bboxes(
-    JSON_IMAGE_DATA_FILE,
-    RESIZED_IMAGE_BBOX_DIRECTORY,
-    RESIZED_IMAGE_DIRECTORY,
-    new_size=NEW_IMAGE_SIZE,
-    print_with_coords=PRINT_WITH_COORDS
-)
+    if image is None:
+        logging.error(f"Failed to read image from {screenshot_path}")
+        return
+
+    orig_shape = json.loads(orig_shape)
+    orig_height, orig_width = orig_shape
+    scale_x = NEW_IMAGE_SIZE[1] / orig_width
+    scale_y = NEW_IMAGE_SIZE[0] / orig_height
+
+    logging.debug(f"Scale factors: x={scale_x}, y={scale_y}")
+
+    resized_image = resize_image(image, NEW_IMAGE_SIZE)
+    logging.debug(f"Resized image to {NEW_IMAGE_SIZE}")
+
+    resized_image_path_without_bbox = os.path.join(RESIZED_WITHOUT_BBOX_DIRECTORY, f"{os.path.splitext(os.path.basename(screenshot_path))[0]}.jpg")
+    save_image(resized_image, resized_image_path_without_bbox, IMAGE_QUALITY)
+    logging.debug(f"Saved resized image without bounding boxes to {RESIZED_WITHOUT_BBOX_DIRECTORY}")
+
+    resized_x1 = x1 * scale_x
+    resized_y1 = y1 * scale_y
+    resized_x2 = x2 * scale_x
+    resized_y2 = y2 * scale_y
+
+    logging.debug(f"Scaled bounding box coordinates: ({resized_x1}, {resized_y1}), ({resized_x2}, {resized_y2})")
+
+    resized_image_with_bbox = draw_bounding_boxes(resized_image.copy(), resized_x1, resized_y1, resized_x2, resized_y2)
+    logging.debug(f"Drew bounding boxes on resized image")
+
+    resized_image_path_with_bbox = os.path.join(RESIZED_WITH_BBOX_DIRECTORY, f"{os.path.splitext(os.path.basename(screenshot_path))[0]}_bbox.jpg")
+    save_image(resized_image_with_bbox, resized_image_path_with_bbox, IMAGE_QUALITY)
+
+    update_database(record_id, resized_image_path_without_bbox, resized_x1, resized_y1, resized_x2, resized_y2, NEW_IMAGE_SIZE)
+    logging.info(f"Screenshot resizing and database update successful for record ID {record_id}.")
+
+    process_and_save_yolo_labels(record_id, class_id, x1, y1, x2, y2, json.dumps(orig_shape), resized_x1, resized_y1, resized_x2, resized_y2, json.dumps(NEW_IMAGE_SIZE), screenshot_path)
+    logging.info(f"Screenshot resizing, labeling, and database update successful for record ID {record_id}.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # WORKS WITH JSON
+# import os
+# import sys
+# import cv2
+
+# # Add the parent directory to the sys.path
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# from utils.image_utils import resize_image, draw_bounding_box, save_resized_image
+# from utils.bbox_utils import scale_bounding_box, print_bounding_box_details
+# from utils.file_utils import load_json_data, ensure_output_folder_exists, save_scaled_bboxes_to_json
+
+# # Constants
+# NEW_IMAGE_SIZE = (720, 1280)  # Adjust as needed
+# IMAGE_QUALITY = 90
+# PRINT_WITH_COORDS = True
+# RESIZED_IMAGE_DIRECTORY = "screenshots/resized/without_bbox"
+# RESIZED_IMAGE_BBOX_DIRECTORY = "screenshots/resized/with_bbox"
+# JSON_IMAGE_DATA_FILE = "screenshots/json/screenshot_data.json"
+# JSON_RESIZED_DIRECTORY = "screenshots/resized/json"
+# JSON_RESIZED_FILE_NAME = "resized_bbox_data.json"
+
+# def resize_image_and_bboxes(json_path, output_folder_with_bbox, output_folder_without_bbox, new_size=NEW_IMAGE_SIZE, print_with_coords=PRINT_WITH_COORDS):
+#     """Resize images and bounding boxes according to new size, with options to save with and without bounding boxes."""
+#     data = load_json_data(json_path)
+#     ensure_output_folder_exists(output_folder_with_bbox)
+#     ensure_output_folder_exists(output_folder_without_bbox)
+
+#     new_height, new_width = new_size
+
+#     for obj in data['objects']:
+#         image_path = obj['image_path']
+#         bbox = obj['bbox']
+#         orig_shape = obj['orig_shape']
+#         orig_height, orig_width = orig_shape
+
+#         image = cv2.imread(image_path)
+#         if image is None:
+#             print(f"Error: Unable to open image {image_path}")
+#             continue
+
+#         scale_x = new_width / orig_width
+#         scale_y = new_height / orig_height
+
+#         resized_image = resize_image(image, (new_width, new_height))
+#         new_bbox = scale_bounding_box(bbox, scale_x, scale_y)
+
+#         if print_with_coords:
+#             orig_bbox = (bbox['x1'], bbox['y1'], bbox['x2'], bbox['y2'])
+#             print_bounding_box_details(orig_bbox, new_bbox, orig_shape, new_size, scale_x, scale_y)
+#             image_with_bbox = draw_bounding_box(resized_image.copy(), new_bbox)
+
+#             filename_with_bbox = os.path.basename(image_path).replace('.png', '.jpg')
+#             output_path_with_bbox = os.path.join(output_folder_with_bbox, filename_with_bbox)
+
+#             save_resized_image(image_with_bbox, output_path_with_bbox, quality=IMAGE_QUALITY)
+#             print(f"Saved resized image WITH bounding box to {output_path_with_bbox}")
+#         else:
+#             filename_without_bbox = os.path.basename(image_path).replace('.png', '.jpg')
+#             output_path_without_bbox = os.path.join(output_folder_without_bbox, filename_without_bbox)
+
+#             save_resized_image(resized_image, output_path_without_bbox, quality=IMAGE_QUALITY)
+#             print(f"Saved resized image WITHOUT bounding box to {output_path_without_bbox}")
+
+#         # Save scaled bounding boxes to a JSON file
+#         scaled_json_path = os.path.join(JSON_RESIZED_DIRECTORY, JSON_RESIZED_FILE_NAME)
+#         save_scaled_bboxes_to_json(scaled_json_path, new_size, data)
+
+# # Example usage
+# resize_image_and_bboxes(
+#     JSON_IMAGE_DATA_FILE,
+#     RESIZED_IMAGE_BBOX_DIRECTORY,
+#     RESIZED_IMAGE_DIRECTORY,
+#     new_size=NEW_IMAGE_SIZE,
+#     print_with_coords=PRINT_WITH_COORDS
+# )
 
 
 

@@ -85,8 +85,15 @@ def process_frame(model, classes, frame):
 
                 xyxy, conf, cls, ids, orig_shape = extract_box_details(boxes)
 
+                # for i in range(len(xyxy)):
+                #     x1, y1, x2, y2 = xyxy[i]
+                #     confidence = conf[i]
+                #     class_idx = int(cls[i])
+                #     obj_id = ids[i]
+
                 for i in range(len(xyxy)):
                     x1, y1, x2, y2 = xyxy[i]
+                    x1, y1, x2, y2 = float(x1), float(y1), float(x2), float(y2)
                     confidence = conf[i]
                     class_idx = int(cls[i])
                     obj_id = ids[i]
@@ -142,7 +149,7 @@ def extract_box_details(boxes):
     conf = boxes.conf.detach().tolist()
     cls = boxes.cls.detach().tolist()
     ids = boxes.id.detach().tolist() if hasattr(boxes, 'id') and boxes.id is not None else [None] * len(xyxy)
-    orig_shape = boxes.orig_shape
+    orig_shape = (boxes.orig_shape[1], boxes.orig_shape[0])  # Swap width and height
 
     return xyxy, conf, cls, ids, orig_shape
 
@@ -179,15 +186,24 @@ def draw_boxes_and_labels(frame, classes, class_idx, confidence, x1, y1, x2, y2,
         y2 (float): Bottom-right y coordinate of the bounding box.
         obj_id (int): ID of the detected object.
     """
-    # Draw bounding box
-    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-    
-    # Draw class label and confidence
-    label = f"{classes[class_idx]} {confidence:.2f}"
-    cv2.putText(frame, label, (int(x1), int(y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    try:
+        # Convert coordinates to integers for drawing
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-    if obj_id is not None:
-        id_label = f"ID: {int(obj_id)}"
-        cv2.putText(frame, id_label, (int(x1), int(y2 + 30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    else:
-        logging.warning("obj_id is None or invalid")
+        # Debug logging for coordinate values and types
+        logging.debug(f"Drawing rectangle with coordinates: ({x1}, {y1}), ({x2}, {y2})")
+
+        # Draw bounding box
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        # Draw class label and confidence
+        label = f"{classes[class_idx]} {confidence:.2f}"
+        cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        if obj_id is not None:
+            id_label = f"ID: {int(obj_id)}"
+            cv2.putText(frame, id_label, (x1, y2 + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        else:
+            logging.warning("obj_id is None or invalid")
+    except Exception as e:
+        logging.error(f"Error drawing bounding box and labels: {e}")

@@ -6,6 +6,7 @@ import json
 import sqlite3
 
 from functions.object_tracker import object_tracker, log_object_tracker_summary
+from functions.screenshot_resizer import resize_screenshot
 
 from utils.config import FRAME_COUNT_THRESHOLD, ADDITIONAL_FRAME_THRESHOLD, ORIGINAL_SCREENSHOT_DIRECTORY, SS_CONFIDENCE_THRESHOLD, SQLITE_DATABASE_PATH
 from utils.logger import setup_logging
@@ -73,25 +74,37 @@ def check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, x1,
     else:
         logging.warning(f"Object ID {obj_id} not found in tracker.")
 
+import json
+
 def save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, frame_count, frames_since_last_screenshot):
     try:
         logging.info("Connecting to SQLite database.")
         conn = sqlite3.connect(SQLITE_DATABASE_PATH)
         cursor = conn.cursor()
 
-        # Log connection success
-        logging.info("Successfully connected to SQLite database.")
+        # Convert orig_shape to JSON string
+        if isinstance(orig_shape, list):  # Ensure it's a list or any other serializable format
+            orig_shape = json.dumps(orig_shape)
+
+        # Log the type and value
+        logging.debug(f"orig_shape for JSON: {orig_shape}")
 
         # Insert data into the database
         cursor.execute("""
         INSERT INTO screenshots (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, frame_count, frames_since_last_screenshot)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, json.dumps(orig_shape), frame_count, frames_since_last_screenshot))
+        """, (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, frame_count, frames_since_last_screenshot))
+
+        # Get the ID of the last inserted row
+        record_id = cursor.lastrowid
 
         conn.commit()
 
         # Log data insertion success
         logging.info(f"Data successfully written to SQLite database for {class_name}_{confidence:.2f}_{obj_id}.")
+
+        # Call resize_screenshot function
+        resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig_shape)
     
     except sqlite3.Error as e:
         logging.error(f"SQLite error: {e}")
@@ -99,10 +112,6 @@ def save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_p
     finally:
         conn.close()
         logging.info("SQLite database connection closed.")
-
-
-
-
 
 
 

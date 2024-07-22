@@ -1,6 +1,7 @@
+# utils/initialize_database.py
 import sqlite3
 import os
-from utils.config import SQLITE_DATABASE_PATH
+from config import SQLITE_DATABASE_PATH
 
 def initialize_database():
     # Get the directory path from the database file path
@@ -23,24 +24,33 @@ def initialize_database():
         obj_id INTEGER,
         timestamp INTEGER,
         screenshot_path TEXT,
-        x1 INTEGER,
-        y1 INTEGER,
-        x2 INTEGER,
-        y2 INTEGER,
+        x1 REAL,
+        y1 REAL,
+        x2 REAL,
+        y2 REAL,
         orig_shape TEXT,
         frame_count INTEGER,
         frames_since_last_screenshot INTEGER,
         resized_screenshot_path TEXT,
-        resized_x1 INTEGER,
-        resized_y1 INTEGER,
-        resized_x2 INTEGER,
-        resized_y2 INTEGER,
-        resized_shape TEXT
+        resized_x1 REAL,
+        resized_y1 REAL,
+        resized_x2 REAL,
+        resized_y2 REAL,
+        resized_shape TEXT,
+        orig_x_center REAL,
+        orig_y_center REAL,
+        orig_width REAL,
+        orig_height REAL,
+        resized_x_center REAL,
+        resized_y_center REAL,
+        resized_width REAL,
+        resized_height REAL
     );
     """)
 
     conn.commit()
     conn.close()
+    print("Database created successfully!")
 
 if __name__ == '__main__':
     initialize_database()

@@ -8,7 +8,7 @@ MODEL_TRACK_IOU = 0.5    # Minimum intersection over union (IOU) threshold for o
 
 SS_CONFIDENCE_THRESHOLD = 0.25  # Confidence threshold for object detection before saving a screenshot
 FRAME_COUNT_THRESHOLD = 5  # Number of consecutive frames required to save a screenshot
-ADDITIONAL_FRAME_THRESHOLD = 10  # Number of frames before saving additional screenshots
+ADDITIONAL_FRAME_THRESHOLD = 20  # Number of frames before saving additional screenshots
 MAX_SCREENSHOTS = 5 # Maximum number of screenshots to save
 
 RESIZE_DIMENSIONS = (1280, 720) # Resize dimensions for images (width, height)
@@ -36,18 +36,27 @@ TRACKER_CONFIG_PATH = "./config/bytetrack.yaml"  # Path to the tracker configura
 # Model and video source configurations
 MODEL_PATH = "./model/yolov8s-world.pt"  # Path to the YOLO model file
 MODEL_CLASSES = ["bird", "squirrel", "deer", "raccoon"]  # List of class names for the model
-VIDEO_SOURCE = "https://www.youtube.com/live/2uabwdYMzVk?si=39R-M8O61pCMvRVN"  # URL or path of the video source
+VIDEO_SOURCE = "https://www.youtube.com/live/2EZsnPekrGw?si=d43zEbHKRyuqh18r"  # URL or path of the video source
 
 # Logging configurations
 LOG_DIRECTORY = "logs"  # Directory where log files will be saved
 LOG_FILE_NAME = "application.log"  # Name of the log file
 
 # Screenshot configurations
-ORIGINAL_SCREENSHOT_DIRECTORY = "./screenshots/original/screenshots"
+ORIGINAL_SCREENSHOT_DIRECTORY = "screenshots/original/screenshots"
+ORIGINAL_LABELS_DIRECTORY = "screenshots/original/labels"
+
 ORIGINAL_JSON_DIRECTORY = "screenshots/original/json"
 ORIGINAL_JSON_FILE_NAME = "original_screenshot_data.json"
 
 
 
-LABEL_DIRECTORY = "./screenshots/labels"
-ANNOTATE_DIRECTORY = "./screenshots/annotated"
+RESIZED_WITH_BBOX_DIRECTORY = "screenshots/resized/with_bbox"
+RESIZED_WITHOUT_BBOX_DIRECTORY = "screenshots/resized/without_bbox"
+RESIZED_LABELS_DIRECTORY = "screenshots/resized/labels"
+
+
+
+
+LABEL_DIRECTORY = "screenshots/labels"
+ANNOTATE_DIRECTORY = "screenshots/annotated"
