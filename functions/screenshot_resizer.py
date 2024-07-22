@@ -13,7 +13,9 @@ from functions.labeler import process_and_save_yolo_labels
 setup_logging()
 
 # Define constants
-NEW_IMAGE_SIZE = (1280, 720)
+NEW_IMAGE_SIZE_HEIGHT = 720
+NEW_IMAGE_SIZE_WIDTH = 1280
+
 IMAGE_QUALITY = 90
 RESIZED_WITHOUT_BBOX_DIRECTORY = "./screenshots/resized/without_bbox"
 RESIZED_WITH_BBOX_DIRECTORY = "./screenshots/resized/with_bbox"
@@ -45,27 +47,17 @@ def draw_bounding_boxes(image, x1, y1, x2, y2):
     logging.info(f"Bouding box drawn successfully on image")
     return image
 
-def update_database(record_id, resized_image_path_without_bbox, resized_x1, resized_y1, resized_x2, resized_y2, new_shape):
+def update_database(record_id, resized_image_path, resized_x1, resized_y1, resized_x2, resized_y2, resized_shape_height, resized_shape_width):
     logging.debug(f"Updating database for record ID {record_id}")
     try:
         conn = sqlite3.connect(SQLITE_DATABASE_PATH)
         cursor = conn.cursor()
 
-        # Convert new_shape tuple to JSON string
-        new_shape_json = json.dumps(new_shape)
-        logging.debug(f"Converted new_shape to JSON: {new_shape_json}")
-
-        # Debug logging for values being used in the query
-        logging.debug(f"Values for UPDATE query: "
-                      f"resized_image_path_without_bbox={resized_image_path_without_bbox}, "
-                      f"resized_x1={resized_x1}, resized_y1={resized_y1}, resized_x2={resized_x2}, "
-                      f"resized_y2={resized_y2}, new_shape_json={new_shape_json}, record_id={record_id}")
-
         cursor.execute("""
         UPDATE screenshots
-        SET resized_screenshot_path = ?, resized_x1 = ?, resized_y1 = ?, resized_x2 = ?, resized_y2 = ?, resized_shape = ?
+        SET resized_screenshot_path = ?, resized_x1 = ?, resized_y1 = ?, resized_x2 = ?, resized_y2 = ?, resized_shape_height = ?, resized_shape_width = ?
         WHERE id = ?
-        """, (resized_image_path_without_bbox, resized_x1, resized_y1, resized_x2, resized_y2, new_shape_json, record_id))
+        """, (resized_image_path, resized_x1, resized_y1, resized_x2, resized_y2, resized_shape_height, resized_shape_width, record_id))
 
         conn.commit()
         logging.info(f"Successfully updated resized data for record ID {record_id}.")
@@ -75,31 +67,27 @@ def update_database(record_id, resized_image_path_without_bbox, resized_x1, resi
         conn.close()
         logging.info("SQLite database connection closed after resizing.")
 
-def resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig_shape):
-    logging.debug(f"Resizing screenshot for record ID {record_id} with original shape {orig_shape}")
+def resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig_shape_height, orig_shape_width):
+    logging.debug(f"Resizing screenshot for record ID {record_id}")
     ensure_directory_exists(RESIZED_WITHOUT_BBOX_DIRECTORY)
     ensure_directory_exists(RESIZED_WITH_BBOX_DIRECTORY)
 
     image = cv2.imread(screenshot_path)
-    logging.debug(f"Read image from {screenshot_path}")
 
     if image is None:
         logging.error(f"Failed to read image from {screenshot_path}")
         return
 
-    orig_shape = json.loads(orig_shape)
-    orig_height, orig_width = orig_shape
-    scale_x = NEW_IMAGE_SIZE[1] / orig_width
-    scale_y = NEW_IMAGE_SIZE[0] / orig_height
+    scale_x = NEW_IMAGE_SIZE_WIDTH / orig_shape_width
+    scale_y = NEW_IMAGE_SIZE_HEIGHT / orig_shape_height
 
     logging.debug(f"Scale factors: x={scale_x}, y={scale_y}")
 
-    resized_image = resize_image(image, NEW_IMAGE_SIZE)
-    logging.debug(f"Resized image to {NEW_IMAGE_SIZE}")
+    resized_image = cv2.resize(image, (NEW_IMAGE_SIZE_WIDTH, NEW_IMAGE_SIZE_HEIGHT))
 
-    resized_image_path_without_bbox = os.path.join(RESIZED_WITHOUT_BBOX_DIRECTORY, f"{os.path.splitext(os.path.basename(screenshot_path))[0]}.jpg")
-    save_image(resized_image, resized_image_path_without_bbox, IMAGE_QUALITY)
-    logging.debug(f"Saved resized image without bounding boxes to {RESIZED_WITHOUT_BBOX_DIRECTORY}")
+    resized_image_path = os.path.join(RESIZED_WITHOUT_BBOX_DIRECTORY, f"{os.path.splitext(os.path.basename(screenshot_path))[0]}.jpg")
+    cv2.imwrite(resized_image_path, resized_image, [int(cv2.IMWRITE_JPEG_QUALITY), IMAGE_QUALITY])
+    logging.debug(f"Saved resized image without bounding boxes to {resized_image_path}")
 
     resized_x1 = x1 * scale_x
     resized_y1 = y1 * scale_y
@@ -109,17 +97,21 @@ def resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig
     logging.debug(f"Scaled bounding box coordinates: ({resized_x1}, {resized_y1}), ({resized_x2}, {resized_y2})")
 
     resized_image_with_bbox = draw_bounding_boxes(resized_image.copy(), resized_x1, resized_y1, resized_x2, resized_y2)
-    logging.debug(f"Drew bounding boxes on resized image")
 
     resized_image_path_with_bbox = os.path.join(RESIZED_WITH_BBOX_DIRECTORY, f"{os.path.splitext(os.path.basename(screenshot_path))[0]}_bbox.jpg")
-    save_image(resized_image_with_bbox, resized_image_path_with_bbox, IMAGE_QUALITY)
+    cv2.imwrite(resized_image_path_with_bbox, resized_image_with_bbox, [int(cv2.IMWRITE_JPEG_QUALITY), IMAGE_QUALITY])
+    logging.debug(f"Saved resized image with bounding boxes to {resized_image_path_with_bbox}")
 
-    update_database(record_id, resized_image_path_without_bbox, resized_x1, resized_y1, resized_x2, resized_y2, NEW_IMAGE_SIZE)
+    # Define resized shape dimensions
+    resized_shape_height = NEW_IMAGE_SIZE_HEIGHT
+    resized_shape_width = NEW_IMAGE_SIZE_WIDTH
+
+    # Update the database with resized dimensions
+    update_database(record_id, resized_image_path, resized_x1, resized_y1, resized_x2, resized_y2, resized_shape_height, resized_shape_width)
     logging.info(f"Screenshot resizing and database update successful for record ID {record_id}.")
 
-    process_and_save_yolo_labels(record_id, class_id, x1, y1, x2, y2, json.dumps(orig_shape), resized_x1, resized_y1, resized_x2, resized_y2, json.dumps(NEW_IMAGE_SIZE), screenshot_path)
+    process_and_save_yolo_labels(record_id, class_id, x1, y1, x2, y2, orig_shape_height, orig_shape_width, resized_x1, resized_y1, resized_x2, resized_y2, resized_shape_height, resized_shape_width, screenshot_path, resized_image_path)
     logging.info(f"Screenshot resizing, labeling, and database update successful for record ID {record_id}.")
-
 
 
 

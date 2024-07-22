@@ -15,96 +15,79 @@ from utils.logger import setup_logging
 setup_logging()
 
 def check_and_save_screenshot(obj_id, class_idx, confidence, frame, classes, x1, y1, x2, y2, orig_shape):
-    """
-    Check if a screenshot should be saved based on object tracking data and thresholds.
-    Save the initial screenshot if the conditions are met. 
-    Additionally, save extra screenshots if enough frames have passed since the last save.
-    """
     class_name = classes[class_idx]
     class_id = class_idx
     timestamp = int(time.time())
 
+    if not orig_shape:
+        logging.error("orig_shape is not provided")
+        return
+
+    orig_shape_width, orig_shape_height = orig_shape  # Unpack the height and width from the tuple
+
+    logging.debug(f"orig_shape_width: {orig_shape_width}, orig_shape_height: {orig_shape_height}")
+    
     if obj_id in object_tracker:
         obj_data = object_tracker[obj_id]
 
-        # Log summary before saving the screenshot
         if obj_data['frame_count'] >= FRAME_COUNT_THRESHOLD:
             log_object_tracker_summary(obj_id)
 
-        # Debug statements to check values
         logging.debug(f"Object ID: {obj_id}")
         logging.debug(f"Current confidence: {confidence}")
         logging.debug(f"Threshold: {SS_CONFIDENCE_THRESHOLD}")
         logging.debug(f"Object data: Frame Count: {obj_data.get('frame_count', 'N/A')}, Frames Since Last Screenshot: {obj_data.get('frames_since_last_screenshot', 'N/A')}, Saved: {obj_data.get('saved', 'N/A')}")
 
-        # Check if the object has been tracked long enough and confidence is consistently high
         if obj_data['frame_count'] >= FRAME_COUNT_THRESHOLD:
             if confidence > SS_CONFIDENCE_THRESHOLD and not obj_data['saved']:
-                # Save the initial screenshot
                 screenshot_path = f"{ORIGINAL_SCREENSHOT_DIRECTORY}/{class_name}_{class_id}_{confidence:.2f}_{obj_id}_{timestamp}.png"
                 cv2.imwrite(screenshot_path, frame)
                 logging.info(f"Screenshot saved: {screenshot_path}")
 
-                # Save data to SQLite
-                save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, obj_data['frame_count'], obj_data['frames_since_last_screenshot'])
+                save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape_height, orig_shape_width, obj_data['frame_count'], obj_data['frames_since_last_screenshot'])
 
-                obj_data['saved'] = True  # Mark as saved
+                obj_data['saved'] = True
                 logging.info(f"Initial screenshot saved for {class_name}_{confidence:.2f}_{obj_id}.")
 
-            # Save additional screenshots if enough frames have passed
             if obj_data['frames_since_last_screenshot'] >= ADDITIONAL_FRAME_THRESHOLD:
                 try:
-                    # Save additional screenshot
                     additional_screenshot_path = f"{ORIGINAL_SCREENSHOT_DIRECTORY}/{class_name}_{class_id}_{confidence:.2f}_{obj_id}_{timestamp}.png"
                     cv2.imwrite(additional_screenshot_path, frame)
                     logging.info(f"Additional screenshot for {class_name}_{confidence:.2f}_{obj_id} saved: {additional_screenshot_path}")
 
-                    # Save data to SQLite
-                    save_to_db(class_name, class_id, confidence, obj_id, timestamp, additional_screenshot_path, x1, y1, x2, y2, orig_shape, obj_data['frame_count'], obj_data['frames_since_last_screenshot'])
-                    # Log message after additional screenshot data is successfully saved to SQLite
+                    save_to_db(class_name, class_id, confidence, obj_id, timestamp, additional_screenshot_path, x1, y1, x2, y2, orig_shape_height, orig_shape_width, obj_data['frame_count'], obj_data['frames_since_last_screenshot'])
                     logging.info(f"Additional screenshot data successfully saved to SQLite for {class_name}_{confidence:.2f}_{obj_id}.")
-
                 except Exception as e:
                     logging.error(f"Error saving additional screenshot for object {obj_id}: {e}")
 
-                obj_data['frames_since_last_screenshot'] = 0  # Reset the counter
+                obj_data['frames_since_last_screenshot'] = 0
                 logging.info(f"Additional screenshot saved for {class_name}_{confidence:.2f}_{obj_id}.")
         else:
             logging.debug(f"Frame count {obj_data['frame_count']} is less than threshold {FRAME_COUNT_THRESHOLD}.")
     else:
         logging.warning(f"Object ID {obj_id} not found in tracker.")
 
-import json
 
-def save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, frame_count, frames_since_last_screenshot):
+def save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape_height, orig_shape_width, frame_count, frames_since_last_screenshot):
     try:
         logging.info("Connecting to SQLite database.")
         conn = sqlite3.connect(SQLITE_DATABASE_PATH)
         cursor = conn.cursor()
 
-        # Convert orig_shape to JSON string
-        if isinstance(orig_shape, list):  # Ensure it's a list or any other serializable format
-            orig_shape = json.dumps(orig_shape)
-
-        # Log the type and value
-        logging.debug(f"orig_shape for JSON: {orig_shape}")
-
-        # Insert data into the database
         cursor.execute("""
-        INSERT INTO screenshots (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, frame_count, frames_since_last_screenshot)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape, frame_count, frames_since_last_screenshot))
+        INSERT INTO screenshots (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape_height, orig_shape_width, frame_count, frames_since_last_screenshot)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (class_name, class_id, confidence, obj_id, timestamp, screenshot_path, x1, y1, x2, y2, orig_shape_height, orig_shape_width, frame_count, frames_since_last_screenshot))
+        
+        conn.commit()
 
-        # Get the ID of the last inserted row
         record_id = cursor.lastrowid
 
         conn.commit()
 
-        # Log data insertion success
         logging.info(f"Data successfully written to SQLite database for {class_name}_{confidence:.2f}_{obj_id}.")
 
-        # Call resize_screenshot function
-        resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig_shape)
+        resize_screenshot(record_id, screenshot_path, class_id, x1, y1, x2, y2, orig_shape_height, orig_shape_width)
     
     except sqlite3.Error as e:
         logging.error(f"SQLite error: {e}")
@@ -112,7 +95,6 @@ def save_to_db(class_name, class_id, confidence, obj_id, timestamp, screenshot_p
     finally:
         conn.close()
         logging.info("SQLite database connection closed.")
-
 
 
 

@@ -3,33 +3,85 @@ import json
 
 # test_labeler.py
 
-import sys
-import os
 
-# Add the project root directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from functions.labeler import process_and_save_yolo_labels
+data = (3, 'deer', 2, 0.458419531583786, 1, 1721661272, 'screenshots/original/screenshots/deer_2_0.46_1.0_1721661272.png', 657.7404174804688, 222.26126098632812, 1109.761474609375, 494.9451599121094, 1080, 1920, 7, 6, './screenshots/resized/without_bbox/deer_2_0.46_1.0_1721661272.jpg', 438.4936116536458, 148.1741739908854, 739.8409830729166, 329.96343994140625, 720, 1280, None, None, None, None, None, None, None, None)
 
-def test_process_and_save_yolo_labels():
-    # Sample data
-    record_id = 18
-    class_id = 0
-    x1, y1, x2, y2 = 994.7245483398438, 743.4349975585938, 1126.113525390625, 833.4436645507812# VOC coordinates
-    orig_shape = '[1920, 1080]'
-    resized_x1, resized_y1, resized_x2, resized_y2 = 1016.586181640625, 420.05277506510413, 1097.7890625, 519.9231770833333  # Resized VOC coordinates
-    resized_shape = '[1280, 720]'
-    screenshot_path = 'screenshots/original/screenshots/bird_0_0.42_1.0_1721634988.png'
+# Extract values
+class_id = data[2]
+x1 = data[7]
+y1 = data[8]
+x2 = data[9]
+y2 = data[10]
+resized_shape = (data[21], data[22])  # (height, width)
 
-    # Run the function with the sample data
-    process_and_save_yolo_labels(
-        record_id, class_id, x1, y1, x2, y2, orig_shape,
-        resized_x1, resized_y1, resized_x2, resized_y2, resized_shape,
-        screenshot_path
-    )
+from pybboxes import BoundingBox
 
-if __name__ == "__main__":
-    test_process_and_save_yolo_labels()
+def convert_bbox_to_yolo(x1, y1, x2, y2, image_size):
+    try:
+        # Convert VOC bounding box to YOLO format
+        voc_bbox = BoundingBox.from_voc(x1, y1, x2, y2, image_size=image_size)
+        print(f"VOC Bounding Box: {voc_bbox}")
+
+        yolo_bbox = voc_bbox.to_yolo()
+        print(f"YOLO Bounding Box: {yolo_bbox}")
+
+        return yolo_bbox
+    except Exception as e:
+        print(f"Error converting bounding box: {e}")
+
+# Example data
+example_data = {
+    "x1": 657.7404174804688,
+    "y1": 222.26126098632812,
+    "x2": 1109.761474609375,
+    "y2": 494.9451599121094,
+    "image_size": (1280, 720)  # (width, height)
+}
+
+# Convert example bounding box to YOLO format
+yolo_bbox = convert_bbox_to_yolo(
+    example_data["x1"],
+    example_data["y1"],
+    example_data["x2"],
+    example_data["y2"],
+    example_data["image_size"]
+)
+
+print(f"Converted YOLO Bounding Box: {yolo_bbox}")
+
+
+
+
+
+
+# import sys
+# import os
+
+# # Add the project root directory to the Python path
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# from functions.labeler import process_and_save_yolo_labels
+
+# def test_process_and_save_yolo_labels():
+#     # Sample data
+#     record_id = 18
+#     class_id = 0
+#     x1, y1, x2, y2 = 994.7245483398438, 743.4349975585938, 1126.113525390625, 833.4436645507812# VOC coordinates
+#     orig_shape = '[1920, 1080]'
+#     resized_x1, resized_y1, resized_x2, resized_y2 = 1016.586181640625, 420.05277506510413, 1097.7890625, 519.9231770833333  # Resized VOC coordinates
+#     resized_shape = '[1280, 720]'
+#     screenshot_path = 'screenshots/original/screenshots/bird_0_0.42_1.0_1721634988.png'
+
+#     # Run the function with the sample data
+#     process_and_save_yolo_labels(
+#         record_id, class_id, x1, y1, x2, y2, orig_shape,
+#         resized_x1, resized_y1, resized_x2, resized_y2, resized_shape,
+#         screenshot_path
+#     )
+
+# if __name__ == "__main__":
+#     test_process_and_save_yolo_labels()
 
 
 
@@ -42,9 +94,6 @@ if __name__ == "__main__":
 
 # def convert_bbox_to_yolo(x1, y1, x2, y2, image_size_json):
 #     try:
-#         # Convert JSON string to tuple
-#         image_size = tuple(json.loads(image_size_json))
-#         print(f"Image size: {image_size}")
         
 #         # Convert VOC bounding box to YOLO format
 #         voc_bbox = BoundingBox.from_voc(x1, y1, x2, y2, image_size=image_size)
