@@ -1,6 +1,10 @@
-# functions/yolo_model.py
-import logging
+# yolo_model.py
+
+# Third-party library imports
 from ultralytics import YOLO
+
+# Utility imports
+import logging
 from utils.logger import setup_logging
 
 # Set up logging

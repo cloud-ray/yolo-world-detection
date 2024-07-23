@@ -1,6 +1,10 @@
-# functions/stream_handler.py
-import logging
+# stream_handler.py
+
+# Third-party library imports
 from vidgear.gears import CamGear
+
+# Utility imports
+import logging
 from utils.logger import setup_logging
 
 # Set up logging

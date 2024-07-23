@@ -4,5 +4,3 @@ model/*
 logs/*
 scrap/
 screenshots/original/screenshots/*
-screenshots/resized/with_bbox/*
-screenshots/resized/without_bbox/*

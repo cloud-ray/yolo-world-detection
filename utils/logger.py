@@ -16,15 +16,24 @@ def setup_logging(log_directory=LOG_DIRECTORY, log_filename=LOG_FILE_NAME):
     """
     # Ensure the log directory exists
     if not os.path.exists(log_directory):
-        os.makedirs(log_directory)
+        try:
+            os.makedirs(log_directory)
+        except OSError as e:
+            raise RuntimeError(f"Failed to create log directory '{log_directory}': {e}")
 
     # Define the log file path
     log_file_path = os.path.join(log_directory, log_filename)
     
     # Configure logging
-    logging.basicConfig(level=logging.DEBUG,  # Set to DEBUG for detailed logs
-                        format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[
-                            logging.FileHandler(log_file_path),
-                            logging.StreamHandler()  # Optionally also log to console
-                        ])
+    try:
+        logging.basicConfig(
+            level=logging.DEBUG,  # Set to DEBUG for detailed logs
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(log_file_path),
+                logging.StreamHandler()  # Optionally also log to console
+            ]
+        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to configure logging: {e}")
+

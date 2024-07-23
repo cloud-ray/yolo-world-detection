@@ -2,8 +2,8 @@
 import cv2
 import logging
 import time
-from functions.yolo_model import initialize_model
-from functions.stream_handler import initialize_stream
+from yolo_model import initialize_model
+from stream_handler import initialize_stream
 from functions.frame_processor import process_frame
 from utils.config import MODEL_PATH, MODEL_CLASSES, VIDEO_SOURCE, FPS
 from utils.logger import setup_logging

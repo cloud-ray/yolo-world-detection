@@ -1,153 +1,121 @@
-# YOLO-World IP Cam: Real-time Object Detection on Your Smartphone
+# YOLO-World Data Engine: Build Custom Vision Datasets, Hands-Free
+![YOLO in the Wild](./assets/yolo-world-in-the-wild.jpg)
 
-![YOLO-World Detections](./assets/yolo-world-high-thresh.jpg)
+Welcome to the **YOLO-World Data Engine**, a powerful tool designed to simplify the creation of high-quality datasets for custom object detection tasks. 
 
-**Turn your smartphone into a smart IP camera with real-time object detection powered by YOLO-World!**
+This project leverages the YOLO-World framework to automatically collect, label, and prepare image data from live video streams, enabling you to train tailored computer vision models without the need for manual data collection.
 
-This Flask application utilizes the YOLO-World model to detect objects in live video streams from any IP camera, including your phone running the [IP Webcam app](https://play.google.com/store/apps/details?id=com.pas.webcam&pcampaignid=web_share). 
+## Why YOLO-World Data Engine?
 
-**Here's the magic:**
+In the world of computer vision, data is key. While pre-trained models provide a starting point, they often fall short in specific environments or tasks due to their generic training data. The YOLO-World Data Engine addresses this by:
 
-1. **Your Phone as the Camera:** The IP Webcam app transforms your phone into a wireless IP camera, streaming live video to the application.
-2. **YOLO-World in Action:** The YOLO-World model, customized for your needs, detects objects in the video stream in real-time.
-3. **Live Object Tracking:** The application analyzes the video frame-by-frame, drawing bounding boxes around objects and tracking them throughout the video.
+- **Custom Class Detection:** Define your own object classes and capture data from live streams tailored to your needs.
+- **Automated Data Collection:** Capture and store images when objects are detected above a confidence threshold, ensuring high-quality data.
+- **Efficient Data Processing:** Automatically resize images and convert bounding box annotations to the YOLO format, ready for training.
+- **Scalable Storage Solutions:** Organize your dataset with an SQLite database, making it easy to query and manage your data.
 
-**Benefits of YOLO-World IP Cam:**
+## Benefits
 
-* **Rapid Prototyping:** Quickly get your object detection model up and running with YOLO-World, allowing you to focus on refinement.
-* **Continuous Learning:** Capture screenshots of specific objects for ongoing model training, improving its accuracy over time.
+- **Cost-Effective:** Reduce costs associated with manual labeling and pre-trained model usage.
+- **Scalable:** Continuously collect data from multiple video feeds to build comprehensive datasets.
+- **Customizable:** Train models specifically tailored to your unique needs and environments.
 
-## Unleashing the Power of YOLO-World
-
-YOLO-World stands out for its unique "prompt-then-detect" approach. Unlike traditional models limited to predefined categories, YOLO-World detects objects based on descriptive text prompts. This opens up a world of possibilities:
-
-* **Prompt the Model:** Describe the object you want to detect using any text, not just predefined categories.
-* **Real-time Detection:** The model leverages your prompt to find the described object in the video stream.
-
-This innovative approach makes YOLO-World a powerful tool for various real-world applications requiring open-vocabulary object detection.
-
-
+The YOLO-World Data Engine empowers researchers, developers, and AI enthusiasts to unlock the potential of custom object detection with ease. Dive in, explore its features, and start building your own datasets today!
 
 ## Table of Contents
-1. [Installation and Setup](#installation-and-setup)
-   - [Clone the Repository](#clone-the-repository)
-   - [Install Dependencies](#install-dependencies)
-2. [Configuration](#configuration)
-3. [Running the Application](#running-the-application)
-4. [Code Overview](#code-overview)
-   - [main.py](#mainpy)
-   - [Functions Folder](#functions-folder)
-   - [Utils Folder](#utils-folder)
-5. [License](#license)
-6. [Acknowledgments](#acknowledgments)
-7. [Contact](#contact)
 
-## Installation and Setup
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Learn More](#learn-more)
+- [Contributing](#contributing)
+- [License](#license)
 
-### Clone the Repository
+## Installation
 
-Clone the repository and switch to the feature branch:
+To set up the project, ensure you have Python installed along with the required packages:
 
-```bash
-git clone https://github.com/cloud-ray/yolo-world-detection.git
-cd yolo-world-detection
-git checkout feature/youtube-live
-```
+1. **Clone the repository:**
 
-### Install Dependencies
+   ```bash
+   git clone https://github.com/cloud-ray/yolo-world-detection.git
+   cd yolo-world-detection
+   ```
 
-Create and activate a virtual environment (optional but recommended):
+2. **Checkout the feature/youtube-live branch:**
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-```
+   ```bash
+   git checkout feature/youtube-live
+   ```
 
-Install the required Python packages:
+3. **Create and activate a virtual environment::**
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-## Configuration
+4. **Install dependencies:**
 
-Update the `utils/config.py` file with the necessary paths and settings:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Paths and Model Settings
-```python
-# Path to the YOLO model file
-MODEL_PATH = "path/to/your/model/file"
+5. **Set up the SQLite database:**
 
-# List of class names for the model
-MODEL_CLASSES = ["class1", "class2", "class3"]
+   ```bash
+   python setup/initialize_database.py
+   ```
 
-# Path to the video source or camera URL
-VIDEO_SOURCE = "path/to/your/video/source"
-```
+## Usage
 
-### Key Configuration Values
-```python
-# Flag to determine whether to save annotated images or clean images
-SAVE_ANNOTATED_IMAGES = True
-```
-- **`SAVE_ANNOTATED_IMAGES`**: When set to `True`, saves images with bounding boxes. Set to `False` for clean images without annotations.
-
-```python
-# Interval in seconds between detections
-DETECTION_INTERVAL = 0
-```
-- **`DETECTION_INTERVAL`**: Controls detection frequency. `0` performs detection on every frame. Increase to reduce processing load.
-
-```python
-# Maximum number of frames per second to process
-FPS = 30
-```
-- **`FPS`**: Sets the maximum frames per second. Lower FPS reduces processing load but may affect video smoothness. Adjust according to your needs.
-
-## Running the Application
-
-Start the application with:
+To run the object detection application, execute the `main.py` file:
 
 ```bash
 python main.py
 ```
 
-### Usage
-- The application initializes the YOLO model and video stream.
-- It processes frames in real-time and displays the output.
-- Press 'q' to quit the application.
+This will start the video stream processing, displaying detected objects in real-time.
 
-### Troubleshooting
-- Ensure all paths in `utils/config.py` are correct.
-- Check logs for errors or warnings. Refer to `utils/logger.py` for logging details.
+## Project Structure
 
-## Code Overview
+- **`main.py`**: The entry point for the application, managing initialization and processing of video streams.
+  
+- **`yolo_model.py`**: Handles the initialization of the YOLO model.
 
-### `main.py`
+- **`stream_handler.py`**: Manages video stream initialization using the CamGear library.
 
-The `main.py` file orchestrates the object detection application:
+- **`functions/`**:
+  - **`frame_processor.py`**: Processes video frames for object detection and tracking, applying models to track objects.
+  - **`labeler.py`**: Manages YOLO label creation and updates, converting bounding box formats and updating databases.
+  - **`object_tracker.py`**: Maintains a global dictionary to track detected objects, recording confidence scores and frame counts.
+  - **`screenshot_handler.py`**: Captures and saves screenshots of detected objects based on conditions.
+  - **`screenshot_resizer.py`**: Resizes screenshots and updates the database with new image details.
 
-- **Setup Logging**: Configures logging.
-- **Load Model**: Initializes the YOLO-World object detection model.
-- **Initialize Stream**: Starts video capture.
-- **Process and Display Frames**: Processes and displays video frames.
-- **Cleanup**: Releases resources and closes windows.
+- **`utils/`**:
+  - **`config.py`**: Defines configuration settings for detection thresholds, image processing, and paths.
+  - **`frame_utils.py`**: Provides utilities for frame rate management and FPS calculation.
+  - **`logger.py`**: Sets up logging configuration for the project, outputting detailed logs.
 
-### Functions Folder
+## Configuration
 
-- **`frame_processor.py`**: Processes frames for detection and tracking.
-- **`object_tracker.py`**: Tracks detected objects.
-- **`screenshot_handler.py`**: Manages screenshots and labels.
-- **`stream_handler.py`**: Manages video streams.
-- **`yolo_model.py`**: Configures and loads the YOLO model.
+The `utils/config.py` file contains all configurable settings for the project, such as:
 
-### Utils Folder
+- Model paths and classes.
+- Video source URLs.
+- Detection thresholds and image processing parameters.
+- Database and directory paths for screenshots and logs.
 
-- **`config.py`**: Manages configuration settings.
-- **`frame_utils.py`**: Provides utilities for frame processing.
-- **`logger.py`**: Configures application logging.
-- **`image_utils.py`**: Handles image processing tasks.
-- **`annotator.py`**: Processes images with annotations.
+Edit these configurations as needed to match your environment and requirements.
+
+## Learn More
+
+For a detailed overview of the YOLO-World Data Engine project, check out my [blog post](https://yourbloglink.com) where I discuss the motivation, features, and potential applications of this project.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests to improve the project.
 
 ## License
 
@@ -158,6 +126,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [YOLO-World Model](https://docs.ultralytics.com/models/yolo-world)
 - [How to Detect Objects with YOLO-World](https://blog.roboflow.com/how-to-detect-objects-with-yolo-world/)
 - [Object Counting using Ultralytics YOLOv8](https://docs.ultralytics.com/guides/object-counting/)
+- [PixCams.com Wildlife Cam 2 Live Stream](https://www.youtube.com/live/F1Q7iN_RWUs?si=i7zjD5sDlsMy-sef)
+- [Live Birds In 4K! Cornell Lab FeederWatch Cam at Sapsucker Woods](https://www.youtube.com/live/x10vL6_47Dw?si=rTB1bcfrsP9aELE2)
+- [🔴 Ohio Backyard Wildlife: Live Cam Of Birds, Rabbits, And Squirrels!](https://www.youtube.com/live/OIqUka8BOS8?si=56OndqNXGyWHC0kT)
+
 
 ## Contact
 
