@@ -111,7 +111,7 @@ Edit these configurations as needed to match your environment and requirements.
 
 ## Learn More
 
-For a detailed overview of the YOLO-World Data Engine project, check out my [blog post](https://yourbloglink.com) where I discuss the motivation, features, and potential applications of this project.
+For a detailed overview of the YOLO-World Data Engine project, check out my [blog post](https://cloudray.medium.com/yolo-world-data-engine-build-custom-vision-datasets-hands-free-f95bcab90099) where I discuss the motivation, features, and potential applications of this project.
 
 ## Contributing
 
