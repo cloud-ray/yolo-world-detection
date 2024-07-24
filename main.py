@@ -24,8 +24,8 @@ def main():
         logging.error("Failed to initialize model.")
         return
 
-    # Initialize CamGear stream
-    source = VIDEO_SOURCE
+    # Initialize IP Cam stream
+    source = "http://192.168.4.24:8080/video"
     cap = initialize_stream(source)
     if cap is None:
         logging.error("Failed to initialize stream.")
@@ -36,13 +36,19 @@ def main():
             start_time = time.time()
 
             # Read frame from CamGear stream
-            frame = cap.read()
-            if frame is None:
+            ret, frame = cap.read()
+            if not ret:
                 logging.warning("No frame received from stream.")
                 break
 
+            # print("Frame shape:", frame.shape)
+            # print("Frame type:", type(frame))
+
             # Process the frame
             frame = process_frame(model, classes, frame)
+
+            # print("Processed frame shape:", frame.shape)
+            # print("Processed frame type:", type(frame))
 
             # Display the output
             cv2.imshow("YOLO-World Object Detection", frame)
@@ -58,7 +64,7 @@ def main():
             time.sleep(sleep_time)
     finally:
         # Release resources
-        cap.stop()
+        cap.release()
         cv2.destroyAllWindows()
         logging.info("Released resources and closed windows.")
 

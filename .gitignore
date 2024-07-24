@@ -4,3 +4,7 @@ model/*
 logs/*
 scrap/
 screenshots/original/screenshots/*
+screenshots/original/labels/*
+screenshots/resized/with_bbox/*
+screenshots/resized/without_bbox/*
+screenshots/resized/labels/*

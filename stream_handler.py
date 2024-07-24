@@ -1,27 +1,26 @@
 # stream_handler.py
 
-# Third-party library imports
-from vidgear.gears import CamGear
-
-# Utility imports
+import cv2
 import logging
 from utils.logger import setup_logging
 
-# Set up logging
 setup_logging()
 
 def initialize_stream(source):
     """
-    Initialize a video stream from the specified source using CamGear.
+    Initialize a video stream from the specified source using OpenCV.
 
     Args:
-        source (str): The source of the video stream (e.g., YouTube Live URL).
+        source (str): The source of the video stream (e.g., IP camera URL).
 
     Returns:
-        CamGear: Initialized CamGear object if successful, otherwise None.
+        cv2.VideoCapture: Initialized VideoCapture object if successful, otherwise None.
     """
     try:
-        cap = CamGear(source=source, stream_mode=True, logging=True).start()
+        cap = cv2.VideoCapture(source)
+        if not cap.isOpened():
+            logging.error(f"Error opening video stream: {source}")
+            return None
         logging.info(f"Stream initialized successfully with source: {source}")
         return cap
     except Exception as e:
