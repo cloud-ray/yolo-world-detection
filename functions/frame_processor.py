@@ -36,7 +36,7 @@ last_detection_time = time.time()
 # Set SHOW_BOUNDING_BOX to True to display bounding boxes on screenshots during testing.
 # This is useful for debugging and verifying detection accuracy.
 # Set SHOW_BOUNDING_BOX to False to capture screenshots without bounding boxes for use as training data.
-SHOW_BOUNDING_BOX = False
+SHOW_BOUNDING_BOX = True
 
 
 def process_frame(model, classes, frame):
