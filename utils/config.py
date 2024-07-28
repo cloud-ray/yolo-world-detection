@@ -34,7 +34,7 @@ TRACKER_CONFIG_PATH = "./config/bytetrack.yaml"  # Path to the tracker configura
 
 # Model and Video Source Configurations
 MODEL_PATH = "./model/yolov8s-world.pt"  # Path to the YOLO model file
-MODEL_CLASSES = ["sofa chair", "lamp", "stuffed animal"]  # List of class names for the model
+MODEL_CLASSES = ["sofa chair", "lamp", "teapot"]  # List of class names for the model
 VIDEO_SOURCE = "https://www.youtube.com/live/x10vL6_47Dw?si=Mv-dGI0rM2Egk2Uf"  # URL or path of the video source
 
 # Logging Configurations
